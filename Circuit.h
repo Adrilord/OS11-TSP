@@ -8,7 +8,7 @@ using namespace std;
 #ifndef CIRCUIT_H
 #define CIRCUIT_H
 
-#define NMAX 10000 //max number of nodes
+#define NMAX 1000 //max number of nodes
 #define DISTANCE_MAX 10000
 
 struct Point {
@@ -19,8 +19,9 @@ struct Point {
 typedef struct Circuit{
     int n; //number of nodes (=> (n-1) connections)
     int node[NMAX]; //nodes (node 0 is the depot)
+    int index_in_node[NMAX]; //index of a node
     int next[NMAX]; //connections
-    double totalLength = 0.0;
+    int before[NMAX]; //connections
 }Circuit;
 
 //Local variables (for all)
@@ -31,7 +32,6 @@ static double maxY;
 static Point input_points[NMAX];
 static bool in_circuit[NMAX];
 static double dist2[NMAX + 1][NMAX + 1];
-static int newest_node;
 
 
 //add a node to the circuit
@@ -39,12 +39,13 @@ void addNode(int p, int next_to) {
     //neighbors management
     int temp_next = circuit.next[next_to];
     circuit.next[next_to] = p;
+    circuit.before[p] = next_to;
     circuit.next[p] = temp_next;
-    circuit.totalLength += sqrt(dist2[next_to][p]);
+    circuit.before[temp_next] = p;
     //circuit management
     circuit.node[circuit.n] = p;
+    circuit.index_in_node[p] = circuit.n;
     in_circuit[p] = true;
-    newest_node = p;
     circuit.n++;
 }
 
@@ -52,11 +53,10 @@ void initCircuit() {
     for(int i=0; i<N; i++) {
         circuit.node[i] = 0;
         circuit.next[i] = 0;
+        circuit.before[i] = 0;
         in_circuit[i] = false;
     }
-    circuit.totalLength=0;
     circuit.n=0;
-    newest_node=0;
 }
 
 //read input points (to construct the nodes for the network) from 
@@ -83,7 +83,6 @@ void writeOut(string filepath) {
     f.open(filepath,fstream::in | fstream::out | fstream::trunc);
     if (f.is_open()) {
         int current_node = circuit.node[0];
-        f << circuit.totalLength << endl;
         for (int i = 0; i < circuit.n; i++) {
             f << input_points[current_node].x << " "
                 << input_points[current_node].y
