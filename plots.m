@@ -1,9 +1,9 @@
 clear;
 
-fin = './input/input_1.txt';
-fout = './output/output_PLI_1.txt';
-%'./output/output_PLI_0.txt'
-%'./output/output_MI_0.txt'
+fin = './input/input_test.txt';
+fout = './output/output_PPI_test.txt';
+%'./output/output_PLI_test.txt'
+%'./output/output_MI_test.txt'
 
 % read input
 f=fopen(fin);
@@ -32,11 +32,9 @@ while ischar(oline)
 end
 fclose(f);
 
-minL = sscanf(olines{1}, '%f');
-disp(minL);
 starts = zeros(n, 2);
 for i=1:n
-    l = sscanf(olines{i+1}, '%f %f');
+    l = sscanf(olines{i}, '%f %f');
     starts(i,1)=l(1);
     starts(i,2)=l(2);
 end
