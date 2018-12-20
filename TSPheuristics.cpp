@@ -4,32 +4,18 @@
 #include <string>
 #include "MersenneTwister.h"
 #include "Circuit.h"
+#include <algorithm>
+#include <chrono>
 
-#define SEED 2018 //seed used
 #define NB_TEST 100
 #define NB_POINTS 50
 #define MAX_X 10
 #define MAX_Y 10
+#define MAX_TIME 1000000
 
 using namespace std;
+using namespace std::chrono;
 
-static MTRand generator; // Mersenne Twister PRNG
-
-//generate a list of points and register it in a input file
-//using a Pseudo Random Number Generator (PRNG) from Mersenne Twister
-void gen(int n, double maxX, double maxY, string filename) {
-    ofstream f;
-    f.open(filename);
-    f << n << endl;
-    f << maxX << " " << maxY << endl;
-    double x, y;
-    for (int i = 0; i < n; i++) {
-        x = generator.randDblExc(maxX);
-        y = generator.randDblExc(maxY);
-        f << x << " " << y << endl;
-    }
-    f.close();
-}
 
 //Nearest Insertion heuristic algorithm (PPI : "Plus Proche Insertion")
 void PPI()
@@ -174,8 +160,21 @@ void MI()
     }
 }
 
-int main ()
-{
+
+high_resolution_clock::time_point now() {
+    return high_resolution_clock::now();
+}
+
+int main() {
+    high_resolution_clock::time_point start, finish;
+    duration<double, std::milli> timespan;
+    double exec_times[3][NB_TEST];
+    double circuit_length[3][NB_TEST];
+    //~ double time_classement_counts[3][3];
+    //~ double length_classement_counts[3][3];
+    //~ double mean_circuit_length[3];
+    ofstream file_stats;
+    
     //Graphic test file
     readInputPoints("./input/input_test.txt");
     calculateDist2();
@@ -188,14 +187,51 @@ int main ()
     initCircuit();
     PPI();
     writeOut("./output/output_MI_test.txt");
-
-    //~ generator.seed(SEED);
-    //~ for (int i = 0; i < NB_TEST; i++) {
-        //~ // we generate input files to record data (we could also directly
-        //~ // save data in variables)
-        //~ filename_in = "./input/input_" + to_string(i) + ".txt";
-        //~ gen(NB_POINTS, MAX_X, MAX_Y,filename_in); // to make in option
-    //~ }
+    
+    for(int i=0; i<3; i++) {
+        for(int j=0; j<NB_TEST; j++) {
+            initCircuit();
+            generateInputPoints(NB_POINTS,MAX_X,MAX_Y);
+            calculateDist2();
+            cout << "GENERATION" << endl;
+            for(int l=0; l<NB_POINTS; l++) {
+                cout << input_points[l].x << " " << input_points[l].y  << endl;
+            }
+            if(j==0) {
+                start = now();
+                PPI();
+                finish = now();
+            } else if (j==1) {
+                start = now();
+                PLI();
+                finish = now();                    
+            } else {
+                start = now();
+                MI();
+                finish = now();    
+            }
+            timespan = finish - start;
+            exec_times[i][j] = timespan.count();
+            circuit_length[i][j] = getCircuitLength();
+        }
+    }
+    
+    file_stats.open("./output/statistics.txt",fstream::in | fstream::out | fstream::trunc);
+    if (file_stats.is_open()) {
+        for(int i=0; i<3; i++) {
+            for(int j=0; j<NB_TEST; j++) {
+                cout << i << " " << j << " " << exec_times[i][j] << " "
+                    << circuit_length[i][j]
+                    << endl;
+                file_stats << i << " " << j << " " << exec_times[i][j] << " "
+                    << circuit_length[i][j]
+                    << endl;
+            }
+        }
+        file_stats.close();
+    } else {
+        throw invalid_argument("Error on writing statistics");
+    }
     //~ for (int i = 0; i < NB_TEST; i++) {
         //~ for(int algo=1; algo<=3; algo++) {
             //~ filename_in = "./input/input_" + to_string(i) + ".txt";

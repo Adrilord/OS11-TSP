@@ -2,14 +2,18 @@
 #include <fstream>
 #include <cmath>
 #include <string>
+#include "MersenneTwister.h"
 
 using namespace std;
 
 #ifndef CIRCUIT_H
 #define CIRCUIT_H
 
+#define SEED 2018 //seed used
 #define NMAX 1000 //max number of nodes
 #define DISTANCE_MAX 10000
+
+static MTRand generator(SEED); // Mersenne Twister PRNG
 
 struct Point {
     double x;
@@ -104,6 +108,28 @@ void calculateDist2() {
             dist2[j][i] = dist2[i][j]; // the matrix is symetric
         }
     }
+}
+
+//generate a list of points
+//using a Pseudo Random Number Generator (PRNG) from Mersenne Twister
+void generateInputPoints(int n, double maxX, double maxY) {
+    N=n;
+    for (int i = 0; i < N; i++) {
+        input_points[i].x = generator.randDblExc(maxX);
+        input_points[i].y = generator.randDblExc(maxY);
+    }
+}
+
+//calculate the current circuit length
+double getCircuitLength() {
+    double length=0;
+    int node=circuit.node[0];
+    for (int i=0; i<circuit.n; i++) {
+        length+=dist2[node][circuit.next[node]];
+        node = circuit.next[node];
+        cout << dist2[node][circuit.next[node]] << endl;
+    }
+    return length;
 }
 
 #endif //CIRCUIT_H
