@@ -1,4 +1,4 @@
-//Adrien Wartelle
+//Adrien Wartelle and Seddik Habiballah
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <chrono>
 
+//Macros
 #define NB_TEST 100
 #define NB_POINTS 50
 #define MAX_X 10
@@ -25,20 +26,21 @@ void PPI()
     double min_distance=DISTANCE_MAX; // to the graph
     int best_node_to_add=1;
     int add_next_to=0;
-    addNode(0,0); // add a initial node
-    for(int i=0; i<N; i++) { 
+    addNode(0,0); // add an initial node
+    for(int i=0; i<N; i++) { //init distances
         distance_to_subtour[i] = DISTANCE_MAX;
     }
     for(int i=1; i<N; i++) { // ith node to add
-        min_distance=DISTANCE_MAX;
+        min_distance = DISTANCE_MAX;
         min_cost = DISTANCE_MAX;
     // Looking for the node to add to the subtour
         for(int j=0; j<N; j++) { 
             if(in_circuit[j] == false) {// for every node not in subtour
-                if( dist2[j][circuit.node[circuit.n]] < distance_to_subtour[j] ) {
-                    distance_to_subtour[j] =  dist2[j][circuit.node[circuit.n]];
+                int last_node = circuit.n-1;
+                //update distance to current subtour with last point added
+                if(dist2[j][circuit.node[last_node]] < distance_to_subtour[j] ) {
+                    distance_to_subtour[j] =  dist2[j][circuit.node[last_node]];
                 }
-                
                 //find the best distance
                 if(distance_to_subtour[j] < min_distance) {
                     min_distance = distance_to_subtour[j];
@@ -48,12 +50,12 @@ void PPI()
         }
         for(int j=0; j<circuit.n; j++) {  //looking for the best insertion
             int temp_node = circuit.node[j];
-            //distance cost for new node to calculate
+            //distance cost to add best_node next to temp_node
             double temp_distance_cost = 
                     dist2[temp_node][best_node_to_add] 
                     + dist2[best_node_to_add][circuit.next[temp_node]]
                     - dist2[temp_node][circuit.next[temp_node]];
-            //recalculate distances
+            //find minimal cost
             if(temp_distance_cost < min_cost) {
                 min_cost = temp_distance_cost;
                 add_next_to = temp_node; 
@@ -61,8 +63,6 @@ void PPI()
         }
         // Adding a node
         addNode(best_node_to_add, add_next_to);
-        //~ cout << "adding " << best_node_to_add 
-            //~ << " next to " << add_next_to << endl;
     }
 }
 
@@ -75,7 +75,7 @@ void PLI()
     int best_node_to_add=1;
     int add_next_to=0;
     addNode(0,0); // add a initial node
-    for(int i=0; i<N; i++) { 
+    for(int i=0; i<N; i++) { //init distances
         distance_to_subtour[i] = DISTANCE_MAX;
     }
     for(int i=1; i<N; i++) { // ith node to add
@@ -84,10 +84,11 @@ void PLI()
     // Looking for the node to add to the subtour
         for(int j=0; j<N; j++) { 
             if(in_circuit[j] == false) {// for every node not in subtour
-                if( dist2[j][circuit.node[circuit.n]] < distance_to_subtour[j] ) {
-                    distance_to_subtour[j] =  dist2[j][circuit.node[circuit.n]];
+                int last_node = circuit.n - 1;
+                //update distance to current subtour with last point added
+                if( dist2[j][circuit.node[last_node]] < distance_to_subtour[j] ) {
+                    distance_to_subtour[j] =  dist2[j][circuit.node[last_node]];
                 }
-                
                 //find the best distance
                 if(distance_to_subtour[j] > max_distance) {
                     max_distance = distance_to_subtour[j];
@@ -97,12 +98,12 @@ void PLI()
         }
         for(int j=0; j<circuit.n; j++) {  //looking for the best insertion
             int temp_node = circuit.node[j];
-            //distance cost for new node to calculate
+            //distance cost to add best_node next to temp_node
             double temp_distance_cost = 
                     dist2[temp_node][best_node_to_add] 
                     + dist2[best_node_to_add][circuit.next[temp_node]]
                     - dist2[temp_node][circuit.next[temp_node]];
-            //recalculate distances
+            //find minimal cost
             if(temp_distance_cost < min_cost) {
                 min_cost = temp_distance_cost;
                 add_next_to = temp_node; 
@@ -121,7 +122,7 @@ void MI()
     int best_node_to_add=1;
     int add_next_to=0;
     addNode(0,0); // add a initial node
-    for(int i=0; i<N; i++) { 
+    for(int i=0; i<N; i++) { //init costs
         for(int j=0; j<N; j++) { 
             distance_cost[i][j] = DISTANCE_MAX;
         }
@@ -131,16 +132,15 @@ void MI()
         //Update the distance costs
         for(int j=0; j<N; j++) { 
             if(in_circuit[j] == false) {// for every node not in subtour
-                
-                //distance cost for new node to calculate
-                distance_cost[j][circuit.node[circuit.n]] = 
-                        dist2[j][circuit.node[circuit.n]] + dist2[j][circuit.next[circuit.node[circuit.n]]]
-                        - dist2[circuit.node[circuit.n]][circuit.next[circuit.node[circuit.n]]];
-                //and to recalculate for its precedent node 
-                //because its next node (neighbour) has changed
-                distance_cost[j][circuit.before[circuit.node[circuit.n]]] = 
-                        dist2[j][circuit.before[circuit.node[circuit.n]]] + dist2[j][circuit.node[circuit.n]]
-                        - dist2[circuit.before[circuit.node[circuit.n]]][circuit.node[circuit.n]];
+                int last_node = circuit.n - 1;
+                //distance cost to add next to last node added to calculate
+                distance_cost[j][circuit.node[last_node]] = 
+                        dist2[j][circuit.node[last_node]] + dist2[j][circuit.next[circuit.node[last_node]]]
+                        - dist2[circuit.node[last_node]][circuit.next[circuit.node[last_node]]];
+                //distance cost to add next to predecessor of last node to recalculate
+                distance_cost[j][circuit.before[circuit.node[last_node]]] = 
+                        dist2[j][circuit.before[circuit.node[last_node]]] + dist2[j][circuit.node[last_node]]
+                        - dist2[circuit.before[circuit.node[last_node]]][circuit.node[last_node]];
             }
         }
         // Find best insertion
@@ -161,18 +161,17 @@ void MI()
 }
 
 
+//Return current time
 high_resolution_clock::time_point now() {
     return high_resolution_clock::now();
 }
 
 int main() {
+    //Declaration of variables for statistics
     high_resolution_clock::time_point start, finish;
     duration<double, std::milli> timespan;
-    double exec_times[3][NB_TEST];
+    double exec_times[3][NB_TEST];  //in millis
     double circuit_length[3][NB_TEST];
-    //~ double time_classement_counts[3][3];
-    //~ double length_classement_counts[3][3];
-    //~ double mean_circuit_length[3];
     ofstream file_stats;
     
     //Graphic test file
@@ -185,72 +184,58 @@ int main() {
     PLI();
     writeOut("./output/output_PLI_test.txt");
     initCircuit();
-    PPI();
+    MI();
     writeOut("./output/output_MI_test.txt");
     
-    for(int i=0; i<3; i++) {
-        for(int j=0; j<NB_TEST; j++) {
-            initCircuit();
-            generateInputPoints(NB_POINTS,MAX_X,MAX_Y);
-            calculateDist2();
-            cout << "GENERATION" << endl;
-            for(int l=0; l<NB_POINTS; l++) {
-                cout << input_points[l].x << " " << input_points[l].y  << endl;
-            }
-            if(j==0) {
+    //Statistics test
+    for(int i=0; i<3; i++) { //for PPI, PLI and MI
+        for(int j=0; j<NB_TEST; j++) { //for NB_TEST tests
+            initCircuit(); //initialize the circuit defined in "Circuit.h"
+            //random generation of NB_POINTS input points to use for the TSP
+            //(Travelling Salesman problem)
+            generateInputPoints(NB_POINTS,MAX_X,MAX_Y); 
+            calculateDist2(); //Calculate the distance matrix
+            if(j==0) { //PPI
                 start = now();
                 PPI();
                 finish = now();
-            } else if (j==1) {
+            } else if (j==1) { //PLI
                 start = now();
                 PLI();
                 finish = now();                    
-            } else {
+            } else { //MI
                 start = now();
                 MI();
                 finish = now();    
             }
+            //Statistics recording
             timespan = finish - start;
-            exec_times[i][j] = timespan.count();
+            exec_times[i][j] = timespan.count(); //in millis
             circuit_length[i][j] = getCircuitLength();
         }
     }
     
-    file_stats.open("./output/statistics.txt",fstream::in | fstream::out | fstream::trunc);
+    //Writing out statistics
+    file_stats.open("./output/statistics.csv",fstream::in | fstream::out | fstream::trunc);
     if (file_stats.is_open()) {
-        for(int i=0; i<3; i++) {
-            for(int j=0; j<NB_TEST; j++) {
-                cout << i << " " << j << " " << exec_times[i][j] << " "
-                    << circuit_length[i][j]
-                    << endl;
-                file_stats << i << " " << j << " " << exec_times[i][j] << " "
-                    << circuit_length[i][j]
-                    << endl;
+        //~ cout << "n ExecPPI LengthPPI ExecPLI LengthPLI  ExecMI LengthMI" << endl;
+        file_stats << "n ExecPPI LengthPPI ExecPLI LengthPLI  ExecMI LengthMI" << endl;
+        for(int j=0; j<NB_TEST; j++) {
+            //~ cout << j << " ";
+            file_stats << j << " ";
+            for(int i=0; i<3; i++) {
+                //Console output
+                //~ cout << exec_times[i][j] << " " << circuit_length[i][j] << " ";
+                //File output
+                file_stats << exec_times[i][j] << " " << circuit_length[i][j] << " ";
             }
+            //~ cout << endl;
+            file_stats << endl;
         }
         file_stats.close();
     } else {
         throw invalid_argument("Error on writing statistics");
     }
-    //~ for (int i = 0; i < NB_TEST; i++) {
-        //~ for(int algo=1; algo<=3; algo++) {
-            //~ filename_in = "./input/input_" + to_string(i) + ".txt";
-            //~ readInputPoints(filename_in);
-            //~ initCircuit();
-            //~ calculateDist2();
-            //~ if(algo==1) {
-                //~ PPI();
-                //~ filename_out = "./output/output_PPI_" + to_string(i) + ".txt";
-            //~ } else if(algo==2) {
-                //~ PLI();
-                //~ filename_out = "./output/output_PLI_" + to_string(i) + ".txt";
-            //~ } else {
-                //~ MI();
-                //~ filename_out = "./output/output_MI_" + to_string(i) + ".txt";
-            //~ }
-            //~ writeOut(filename_out);
-        //~ }
-        
-    //~ }
+    cout << "Execution finished : results in ./output" << endl;
     return 0;
 }

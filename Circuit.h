@@ -1,3 +1,4 @@
+//Adrien Wartelle and Seddik Habiballah
 #include <iostream>
 #include <fstream>
 #include <cmath>
@@ -9,26 +10,29 @@ using namespace std;
 #ifndef CIRCUIT_H
 #define CIRCUIT_H
 
+//Macros
 #define SEED 2018 //seed used
 #define NMAX 1000 //max number of nodes
 #define DISTANCE_MAX 10000
 
-static MTRand generator(SEED); // Mersenne Twister PRNG
-
+//Point structure
 struct Point {
     double x;
     double y;
 };
 
+//structure sued to implement a tour/circuit for the
+//TSP : Travelling Salesman Problem 
 typedef struct Circuit{
     int n; //number of nodes (=> (n-1) connections)
     int node[NMAX]; //nodes (node 0 is the depot)
-    int index_in_node[NMAX]; //index of a node
+    int index_in_node[NMAX]; //index of a node in the array node
     int next[NMAX]; //connections
     int before[NMAX]; //connections
 }Circuit;
 
-//Local variables (for all)
+//Static variables
+static MTRand generator(SEED); // Mersenne Twister PRNG
 static Circuit circuit;
 static int N; // total number of points on map
 static double maxX;
@@ -53,6 +57,8 @@ void addNode(int p, int next_to) {
     circuit.n++;
 }
 
+//Initialize the circuit (usefull when changing input points and/or
+//algorithm)
 void initCircuit() {
     for(int i=0; i<N; i++) {
         circuit.node[i] = 0;
@@ -63,7 +69,18 @@ void initCircuit() {
     circuit.n=0;
 }
 
-//read input points (to construct the nodes for the network) from 
+//calculate the current circuit length
+double getCircuitLength() {
+    double length=0;
+    int node=circuit.node[0];
+    for (int i=0; i<circuit.n; i++) {
+        length+=dist2[node][circuit.next[node]];
+        node = circuit.next[node];
+    }
+    return length;
+}
+
+//read input points (to construct the nodes for the circuit) from 
 //an input file
 void readInputPoints(string filepath) {
     ifstream f;
@@ -81,7 +98,8 @@ void readInputPoints(string filepath) {
     }
 }
 
-//write the connections of the network to an outputfile
+//write the connections of the circuit,
+//with the order that they have been added to an outputfile
 void writeOut(string filepath) {
     ofstream f;
     f.open(filepath,fstream::in | fstream::out | fstream::trunc);
@@ -89,10 +107,12 @@ void writeOut(string filepath) {
         int current_node = circuit.node[0];
         for (int i = 0; i < circuit.n; i++) {
             f << input_points[current_node].x << " "
-                << input_points[current_node].y
+                << input_points[current_node].y << " "
+                << circuit.index_in_node[current_node]
                 << endl;
             current_node = circuit.next[current_node];
         }
+        f << getCircuitLength() << endl;
         f.close();
     } else {
         throw invalid_argument("Error on writing");
@@ -118,18 +138,6 @@ void generateInputPoints(int n, double maxX, double maxY) {
         input_points[i].x = generator.randDblExc(maxX);
         input_points[i].y = generator.randDblExc(maxY);
     }
-}
-
-//calculate the current circuit length
-double getCircuitLength() {
-    double length=0;
-    int node=circuit.node[0];
-    for (int i=0; i<circuit.n; i++) {
-        length+=dist2[node][circuit.next[node]];
-        node = circuit.next[node];
-        cout << dist2[node][circuit.next[node]] << endl;
-    }
-    return length;
 }
 
 #endif //CIRCUIT_H
