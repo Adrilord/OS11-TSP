@@ -34,7 +34,7 @@ void PPI()
         min_distance = DISTANCE_MAX;
         min_cost = DISTANCE_MAX;
     // Looking for the node to add to the subtour
-        for(int j=0; j<N; j++) { 
+        for(int j=1; j<N; j++) { 
             if(in_circuit[j] == false) {// for every node not in subtour
                 int last_node = circuit.n-1;
                 //update distance to current subtour with last point added
@@ -74,7 +74,7 @@ void PLI()
     double max_distance=0; // to the graph
     int best_node_to_add=1;
     int add_next_to=0;
-    addNode(0,0); // add a initial node
+    addNode(0,0); // add an initial node
     for(int i=0; i<N; i++) { //init distances
         distance_to_subtour[i] = DISTANCE_MAX;
     }
@@ -82,7 +82,7 @@ void PLI()
         max_distance = 0;
         min_cost = DISTANCE_MAX;
     // Looking for the node to add to the subtour
-        for(int j=0; j<N; j++) { 
+        for(int j=1; j<N; j++) { 
             if(in_circuit[j] == false) {// for every node not in subtour
                 int last_node = circuit.n - 1;
                 //update distance to current subtour with last point added
@@ -118,27 +118,27 @@ void PLI()
 void MI()
 {
     double min_cost; // cost to add a new node in the current subtour
-    double distance_cost[NMAX][NMAX]; // cost to a node next to another node
+    double cost[NMAX][NMAX]; // cost to a node next to another node
     int best_node_to_add=1;
     int add_next_to=0;
-    addNode(0,0); // add a initial node
+    addNode(0,0); // add an initial node
     for(int i=0; i<N; i++) { //init costs
         for(int j=0; j<N; j++) { 
-            distance_cost[i][j] = DISTANCE_MAX;
+            cost[i][j] = DISTANCE_MAX;
         }
     }
     for(int i=1; i<N; i++) { // ith node to add
         min_cost = DISTANCE_MAX+1;
         //Update the distance costs
-        for(int j=0; j<N; j++) { 
+        for(int j=1; j<N; j++) { 
             if(in_circuit[j] == false) {// for every node not in subtour
                 int last_node = circuit.n - 1;
                 //distance cost to add next to last node added to calculate
-                distance_cost[j][circuit.node[last_node]] = 
+                cost[j][circuit.node[last_node]] = 
                         dist2[j][circuit.node[last_node]] + dist2[j][circuit.next[circuit.node[last_node]]]
                         - dist2[circuit.node[last_node]][circuit.next[circuit.node[last_node]]];
                 //distance cost to add next to predecessor of last node to recalculate
-                distance_cost[j][circuit.before[circuit.node[last_node]]] = 
+                cost[j][circuit.before[circuit.node[last_node]]] = 
                         dist2[j][circuit.before[circuit.node[last_node]]] + dist2[j][circuit.node[last_node]]
                         - dist2[circuit.before[circuit.node[last_node]]][circuit.node[last_node]];
             }
@@ -147,8 +147,8 @@ void MI()
         for(int j=0; j<N; j++) { 
             if(in_circuit[j] == false) {
                 for(int k=0; k<circuit.n; k++) {
-                    if(distance_cost[j][circuit.node[k]] < min_cost) {
-                        min_cost = distance_cost[j][circuit.node[k]];
+                    if(cost[j][circuit.node[k]] < min_cost) {
+                        min_cost = cost[j][circuit.node[k]];
                         best_node_to_add = j;
                         add_next_to = circuit.node[k];
                     }
